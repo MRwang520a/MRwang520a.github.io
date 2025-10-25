@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商品圖修復 - DEMO</title>
+  <link rel="stylesheet" href="common.css">
+</head>
+<body>
+  <div class="container">
+    <a href="../index.html" class="back-button">
+      ← 返回首頁
+    </a>
+
+    <h1 class="page-title">商品圖修復</h1>
+    <p class="page-subtitle">AI 智能修復商品圖片瑕疵，提升產品展示質量</p>
+
+    <div class="feature-description" style="text-align: center; max-width: 800px; margin: 0 auto 60px; color: #6B7280; font-size: 16px;">
+      <p>
+        使用先進的 AI 修復技術，自動去除商品圖片中的瑕疵、污漬、劃痕等問題。
+        智能優化光線、色彩和清晰度，讓您的商品圖片更加專業、吸引人，
+        提升產品在電商平台的展示效果。
+      </p>
+    </div>
+
+    <!-- 上傳區域 -->
+    <div class="card">
+      <div id="upload-area" class="upload-area">
+        <div class="upload-icon">🖼️</div>
+        <div class="upload-text">點擊或拖拽商品圖片到此處上傳</div>
+        <div class="upload-hint">支持 JPG、PNG、GIF、WebP 格式，最大 10MB</div>
+      </div>
+
+      <!-- 圖片預覽 -->
+      <div id="preview-section" class="hidden" style="margin-top: 30px;">
+        <div class="image-preview">
+          <img id="preview-image" src="" alt="預覽圖片">
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+          <button id="process-button" class="btn btn-primary">
+            開始修復
+          </button>
+        </div>
+      </div>
+
+      <!-- 進度條 -->
+      <div id="progress-section" class="hidden">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 0%"></div>
+        </div>
+        <p style="text-align: center; margin-top: 12px; color: #6B7280; font-size: 14px;">
+          AI 正在修復中，請稍候...
+        </p>
+      </div>
+    </div>
+
+    <!-- 結果展示 -->
+    <div id="result-section" class="card hidden" style="margin-top: 40px;">
+      <h2 style="text-align: center; margin-bottom: 30px; font-size: 24px; color: #374151;">
+        修復結果
+      </h2>
+
+      <div class="comparison-view">
+        <div class="comparison-item">
+          <div class="comparison-label">修復前</div>
+          <div class="image-preview">
+            <img id="original-image" src="" alt="原圖">
+          </div>
+        </div>
+
+        <div class="comparison-item">
+          <div class="comparison-label">修復後</div>
+          <div class="image-preview">
+            <img id="result-image" src="" alt="修復後">
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px; display: flex; gap: 16px; justify-content: center;">
+        <button id="download-button" class="btn btn-primary">
+          下載圖片
+        </button>
+        <button id="restart-button" class="btn btn-secondary">
+          重新上傳
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="common.js"></script>
+  <script>
+    let selectedFile = null;
+    let uploadedImageUrl = null;
+    const toolkit = new AIToolkit();
+
+    const uploadHandler = new FileUploadHandler('upload-area', (file, dataUrl) => {
+      selectedFile = file;
+      document.getElementById('preview-image').src = dataUrl;
+      UIUtils.show('preview-section');
+      UIUtils.hide('result-section');
+    });
+
+    document.getElementById('process-button').addEventListener('click', async () => {
+      if (!selectedFile) {
+        UIUtils.showMessage('請先上傳圖片', 'error');
+        return;
+      }
+
+      try {
+        UIUtils.showLoading('process-button');
+        UIUtils.show('progress-section');
+        UIUtils.updateProgress(10);
+
+        uploadedImageUrl = await toolkit.uploadImage(selectedFile);
+        UIUtils.updateProgress(30);
+
+        const taskId = await toolkit.createTask('ai.retouch', {
+          imageUrl: uploadedImageUrl,
+        });
+        UIUtils.updateProgress(50);
+
+        toolkit.pollTaskStatus(
+          taskId,
+          (status) => {
+            if (status.status === 'processing') {
+              UIUtils.updateProgress(70);
+            }
+          },
+          (status) => {
+            UIUtils.updateProgress(100);
+            UIUtils.hideLoading('process-button', '開始修復');
+            UIUtils.hide('progress-section');
+
+            document.getElementById('original-image').src = uploadedImageUrl;
+            document.getElementById('result-image').src = status.outputImageUrl;
+            UIUtils.show('result-section');
+
+            UIUtils.showMessage('修復完成！', 'success');
+          },
+          (error) => {
+            UIUtils.hideLoading('process-button', '開始修復');
+            UIUtils.hide('progress-section');
+            UIUtils.showMessage(`修復失敗：${error}`, 'error');
+          }
+        );
+      } catch (error) {
+        UIUtils.hideLoading('process-button', '開始修復');
+        UIUtils.hide('progress-section');
+        UIUtils.showMessage(`修復失敗：${error.message}`, 'error');
+      }
+    });
+
+    document.getElementById('download-button').addEventListener('click', async () => {
+      const resultImageUrl = document.getElementById('result-image').src;
+      if (resultImageUrl) {
+        try {
+          await toolkit.downloadImage(resultImageUrl, 'retouch-result.png');
+          UIUtils.showMessage('下載成功！', 'success');
+        } catch (error) {
+          UIUtils.showMessage('下載失敗，請重試', 'error');
+        }
+      }
+    });
+
+    document.getElementById('restart-button').addEventListener('click', () => {
+      selectedFile = null;
+      uploadedImageUrl = null;
+      toolkit.stopPolling();
+
+      UIUtils.hide('preview-section');
+      UIUtils.hide('result-section');
+      UIUtils.hide('progress-section');
+      UIUtils.updateProgress(0);
+
+      document.getElementById('preview-image').src = '';
+      document.getElementById('original-image').src = '';
+      document.getElementById('result-image').src = '';
+    });
+  </script>
+</body>
+</html>
+

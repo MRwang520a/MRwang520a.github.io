@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 設計師 - 文字生成圖片</title>
+  <link rel="stylesheet" href="common.css">
+  <style>
+    .result-image {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .status.processing {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎨 AI 設計師</h1>
+      <p>一句話生成精美圖片</p>
+      <a href="index.html" class="back-link">← 返回功能列表</a>
+    </header>
+
+    <main>
+      <div class="upload-section">
+        <h2>輸入描述</h2>
+        <textarea id="promptInput" rows="4" placeholder="描述你想要的圖片，例如：一隻可愛的貓咪，坐在窗台上看風景" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px;"></textarea>
+        
+        <h2>選擇風格</h2>
+        <select id="styleSelect" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-size: 16px;">
+          <option value="realistic">寫實風格</option>
+          <option value="anime">動漫風格</option>
+          <option value="oil_painting">油畫風格</option>
+          <option value="watercolor">水彩風格</option>
+          <option value="sketch">素描風格</option>
+        </select>
+
+        <button id="generateBtn" class="primary-btn">生成圖片</button>
+      </div>
+
+      <div id="statusSection" style="display: none;">
+        <div id="statusMessage" class="status"></div>
+      </div>
+
+      <div id="resultSection" style="display: none;">
+        <h2>生成結果</h2>
+        <img id="resultImage" class="result-image" alt="生成的圖片">
+        <button id="downloadBtn" class="primary-btn">下載圖片</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="simple.js"></script>
+  <script>
+    const promptInput = document.getElementById('promptInput');
+    const styleSelect = document.getElementById('styleSelect');
+    const generateBtn = document.getElementById('generateBtn');
+    const statusSection = document.getElementById('statusSection');
+    const statusMessage = document.getElementById('statusMessage');
+    const resultSection = document.getElementById('resultSection');
+    const resultImage = document.getElementById('resultImage');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    generateBtn.addEventListener('click', async () => {
+      const prompt = promptInput.value.trim();
+      const style = styleSelect.value;
+
+      if (!prompt) {
+        alert('請輸入圖片描述');
+        return;
+      }
+
+      try {
+        generateBtn.disabled = true;
+        generateBtn.textContent = '生成中...';
+        
+        statusSection.style.display = 'block';
+        statusMessage.className = 'status processing';
+        statusMessage.textContent = '正在生成圖片，請稍候...';
+        
+        resultSection.style.display = 'none';
+
+        const taskId = await window.simpleAI.generateImage(prompt, style);
+        
+        // 暫時顯示成功消息（實際應該輪詢任務狀態）
+        statusMessage.className = 'status success';
+        statusMessage.textContent = `任務已創建！任務 ID: ${taskId}`;
+        
+        // TODO: 實現任務狀態輪詢
+        // 現在暫時顯示一個占位圖
+        setTimeout(() => {
+          resultSection.style.display = 'block';
+          resultImage.src = 'https://via.placeholder.com/512x512?text=AI+Generated+Image';
+          statusMessage.textContent = '圖片生成完成！（這是占位圖，實際功能需要完整的後端支持）';
+        }, 2000);
+
+      } catch (error) {
+        statusMessage.className = 'status error';
+        statusMessage.textContent = `生成失敗：${error.message}`;
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = '生成圖片';
+      }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = resultImage.src;
+      link.download = 'ai-generated-image.png';
+      link.click();
+    });
+  </script>
+</body>
+</html>
+

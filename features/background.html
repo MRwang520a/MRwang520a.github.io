@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>背景合成 - DEMO</title>
+  <link rel="stylesheet" href="common.css">
+</head>
+<body>
+  <div class="container">
+    <a href="../index.html" class="back-button">
+      ← 返回首頁
+    </a>
+
+    <h1 class="page-title">背景合成</h1>
+    <p class="page-subtitle">AI 智能更換圖片背景，創造無限可能</p>
+
+    <div class="feature-description" style="text-align: center; max-width: 800px; margin: 0 auto 60px; color: #6B7280; font-size: 16px;">
+      <p>
+        上傳您的圖片，AI 會自動識別主體並移除背景，然後根據您的描述生成全新的背景場景。
+        無論是產品展示、人物攝影還是創意設計，都能輕鬆實現背景替換，
+        讓您的圖片呈現出專業級的視覺效果。
+      </p>
+    </div>
+
+    <!-- 上傳區域 -->
+    <div class="card">
+      <div id="upload-area" class="upload-area">
+        <div class="upload-icon">🎨</div>
+        <div class="upload-text">點擊或拖拽圖片到此處上傳</div>
+        <div class="upload-hint">支持 JPG、PNG、GIF、WebP 格式，最大 10MB</div>
+      </div>
+
+      <!-- 圖片預覽和背景描述 -->
+      <div id="preview-section" class="hidden" style="margin-top: 30px;">
+        <div class="image-preview">
+          <img id="preview-image" src="" alt="預覽圖片">
+        </div>
+
+        <div class="input-group" style="margin-top: 30px;">
+          <label class="input-label" for="background-input">
+            描述您想要的背景 *
+          </label>
+          <textarea
+            id="background-input"
+            class="input-field"
+            rows="3"
+            placeholder="例如：白色簡約背景、海邊日落、現代辦公室、森林小徑..."
+            maxlength="500"
+          ></textarea>
+          <div style="text-align: right; font-size: 12px; color: #9CA3AF; margin-top: 4px;">
+            <span id="char-count">0</span>/500
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+          <button id="process-button" class="btn btn-primary">
+            開始合成
+          </button>
+        </div>
+      </div>
+
+      <!-- 進度條 -->
+      <div id="progress-section" class="hidden">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 0%"></div>
+        </div>
+        <p style="text-align: center; margin-top: 12px; color: #6B7280; font-size: 14px;">
+          AI 正在合成背景，請稍候...
+        </p>
+      </div>
+    </div>
+
+    <!-- 結果展示 -->
+    <div id="result-section" class="card hidden" style="margin-top: 40px;">
+      <h2 style="text-align: center; margin-bottom: 30px; font-size: 24px; color: #374151;">
+        合成結果
+      </h2>
+
+      <div class="comparison-view">
+        <div class="comparison-item">
+          <div class="comparison-label">原圖</div>
+          <div class="image-preview">
+            <img id="original-image" src="" alt="原圖">
+          </div>
+        </div>
+
+        <div class="comparison-item">
+          <div class="comparison-label">合成後</div>
+          <div class="image-preview">
+            <img id="result-image" src="" alt="合成後">
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px; display: flex; gap: 16px; justify-content: center;">
+        <button id="download-button" class="btn btn-primary">
+          下載圖片
+        </button>
+        <button id="restart-button" class="btn btn-secondary">
+          重新上傳
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="common.js"></script>
+  <script>
+    let selectedFile = null;
+    let uploadedImageUrl = null;
+    const toolkit = new AIToolkit();
+
+    // 字符計數
+    const backgroundInput = document.getElementById('background-input');
+    const charCount = document.getElementById('char-count');
+
+    backgroundInput.addEventListener('input', () => {
+      charCount.textContent = backgroundInput.value.length;
+    });
+
+    const uploadHandler = new FileUploadHandler('upload-area', (file, dataUrl) => {
+      selectedFile = file;
+      document.getElementById('preview-image').src = dataUrl;
+      UIUtils.show('preview-section');
+      UIUtils.hide('result-section');
+    });
+
+    document.getElementById('process-button').addEventListener('click', async () => {
+      if (!selectedFile) {
+        UIUtils.showMessage('請先上傳圖片', 'error');
+        return;
+      }
+
+      const backgroundDesc = backgroundInput.value.trim();
+      if (!backgroundDesc) {
+        UIUtils.showMessage('請描述您想要的背景', 'error');
+        return;
+      }
+
+      try {
+        UIUtils.showLoading('process-button');
+        UIUtils.show('progress-section');
+        UIUtils.updateProgress(10);
+
+        uploadedImageUrl = await toolkit.uploadImage(selectedFile);
+        UIUtils.updateProgress(30);
+
+        const taskId = await toolkit.createTask('ai.background', {
+          imageUrl: uploadedImageUrl,
+          backgroundPrompt: backgroundDesc,
+        });
+        UIUtils.updateProgress(50);
+
+        toolkit.pollTaskStatus(
+          taskId,
+          (status) => {
+            if (status.status === 'processing') {
+              UIUtils.updateProgress(70);
+            }
+          },
+          (status) => {
+            UIUtils.updateProgress(100);
+            UIUtils.hideLoading('process-button', '開始合成');
+            UIUtils.hide('progress-section');
+
+            document.getElementById('original-image').src = uploadedImageUrl;
+            document.getElementById('result-image').src = status.outputImageUrl;
+            UIUtils.show('result-section');
+
+            UIUtils.showMessage('背景合成完成！', 'success');
+          },
+          (error) => {
+            UIUtils.hideLoading('process-button', '開始合成');
+            UIUtils.hide('progress-section');
+            UIUtils.showMessage(`合成失敗：${error}`, 'error');
+          }
+        );
+      } catch (error) {
+        UIUtils.hideLoading('process-button', '開始合成');
+        UIUtils.hide('progress-section');
+        UIUtils.showMessage(`合成失敗：${error.message}`, 'error');
+      }
+    });
+
+    document.getElementById('download-button').addEventListener('click', async () => {
+      const resultImageUrl = document.getElementById('result-image').src;
+      if (resultImageUrl) {
+        try {
+          await toolkit.downloadImage(resultImageUrl, 'background-result.png');
+          UIUtils.showMessage('下載成功！', 'success');
+        } catch (error) {
+          UIUtils.showMessage('下載失敗，請重試', 'error');
+        }
+      }
+    });
+
+    document.getElementById('restart-button').addEventListener('click', () => {
+      selectedFile = null;
+      uploadedImageUrl = null;
+      toolkit.stopPolling();
+
+      UIUtils.hide('preview-section');
+      UIUtils.hide('result-section');
+      UIUtils.hide('progress-section');
+      UIUtils.updateProgress(0);
+
+      document.getElementById('preview-image').src = '';
+      document.getElementById('original-image').src = '';
+      document.getElementById('result-image').src = '';
+      backgroundInput.value = '';
+      charCount.textContent = '0';
+    });
+  </script>
+</body>
+</html>
+
