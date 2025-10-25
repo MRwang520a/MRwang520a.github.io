@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 設計師 - DEMO</title>
+  <link rel="stylesheet" href="common.css">
+</head>
+<body>
+  <div class="container">
+    <a href="../index.html" class="back-button">
+      ← 返回首頁
+    </a>
+
+    <h1 class="page-title">AI 設計師</h1>
+    <p class="page-subtitle">一句話生成精美圖片，讓創意瞬間成真</p>
+
+    <div class="feature-description" style="text-align: center; max-width: 800px; margin: 0 auto 60px; color: #6B7280; font-size: 16px;">
+      <p>
+        只需輸入您的創意描述，AI 設計師就能為您生成高質量的圖片。
+        無論是產品設計、廣告素材還是創意插畫，都能快速實現您的想法。
+      </p>
+    </div>
+
+    <!-- 輸入區域 -->
+    <div class="card">
+      <div class="input-group">
+        <label class="input-label" for="prompt-input">
+          描述您想要的圖片 *
+        </label>
+        <textarea
+          id="prompt-input"
+          class="input-field"
+          rows="4"
+          placeholder="例如：一隻可愛的貓咪坐在筆記本電腦前，陽光透過窗戶灑進來，溫馨的家居環境..."
+          maxlength="1000"
+        ></textarea>
+        <div style="text-align: right; font-size: 12px; color: #9CA3AF; margin-top: 4px;">
+          <span id="char-count">0</span>/1000
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" for="style-select">
+          風格選擇（可選）
+        </label>
+        <select id="style-select" class="input-field">
+          <option value="">默認風格</option>
+          <option value="realistic">寫實風格</option>
+          <option value="cartoon">卡通風格</option>
+          <option value="anime">動漫風格</option>
+          <option value="oil-painting">油畫風格</option>
+          <option value="watercolor">水彩風格</option>
+          <option value="minimalist">極簡風格</option>
+        </select>
+      </div>
+
+      <div style="text-align: center; margin-top: 30px;">
+        <button id="generate-button" class="btn btn-primary">
+          生成圖片
+        </button>
+      </div>
+
+      <!-- 進度條 -->
+      <div id="progress-section" class="hidden">
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 0%"></div>
+        </div>
+        <p style="text-align: center; margin-top: 12px; color: #6B7280; font-size: 14px;">
+          AI 正在創作中，請稍候...
+        </p>
+      </div>
+    </div>
+
+    <!-- 結果展示 -->
+    <div id="result-section" class="card hidden" style="margin-top: 40px;">
+      <h2 style="text-align: center; margin-bottom: 30px; font-size: 24px; color: #374151;">
+        生成結果
+      </h2>
+
+      <div class="image-preview">
+        <img id="result-image" src="" alt="生成的圖片">
+      </div>
+
+      <div style="text-align: center; margin-top: 40px; display: flex; gap: 16px; justify-content: center;">
+        <button id="download-button" class="btn btn-primary">
+          下載圖片
+        </button>
+        <button id="restart-button" class="btn btn-secondary">
+          重新生成
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="common.js"></script>
+  <script>
+    const toolkit = new AIToolkit();
+
+    // 字符計數
+    const promptInput = document.getElementById('prompt-input');
+    const charCount = document.getElementById('char-count');
+
+    promptInput.addEventListener('input', () => {
+      charCount.textContent = promptInput.value.length;
+    });
+
+    // 生成按鈕
+    document.getElementById('generate-button').addEventListener('click', async () => {
+      const prompt = promptInput.value.trim();
+      const style = document.getElementById('style-select').value;
+
+      if (!prompt) {
+        UIUtils.showMessage('請輸入圖片描述', 'error');
+        return;
+      }
+
+      try {
+        UIUtils.showLoading('generate-button');
+        UIUtils.show('progress-section');
+        UIUtils.updateProgress(20);
+
+        // 創建任務
+        const taskId = await toolkit.createTask('ai.designer', {
+          prompt: prompt,
+          style: style || undefined,
+        });
+        UIUtils.updateProgress(40);
+
+        // 輪詢任務狀態
+        toolkit.pollTaskStatus(
+          taskId,
+          (status) => {
+            if (status.status === 'processing') {
+              UIUtils.updateProgress(70);
+            }
+          },
+          (status) => {
+            UIUtils.updateProgress(100);
+            UIUtils.hideLoading('generate-button', '生成圖片');
+            UIUtils.hide('progress-section');
+
+            document.getElementById('result-image').src = status.outputImageUrl;
+            UIUtils.show('result-section');
+
+            UIUtils.showMessage('圖片生成完成！', 'success');
+          },
+          (error) => {
+            UIUtils.hideLoading('generate-button', '生成圖片');
+            UIUtils.hide('progress-section');
+            UIUtils.showMessage(`生成失敗：${error}`, 'error');
+          }
+        );
+      } catch (error) {
+        UIUtils.hideLoading('generate-button', '生成圖片');
+        UIUtils.hide('progress-section');
+        UIUtils.showMessage(`生成失敗：${error.message}`, 'error');
+      }
+    });
+
+    // 下載按鈕
+    document.getElementById('download-button').addEventListener('click', async () => {
+      const resultImageUrl = document.getElementById('result-image').src;
+      if (resultImageUrl) {
+        try {
+          await toolkit.downloadImage(resultImageUrl, 'ai-designer-result.png');
+          UIUtils.showMessage('下載成功！', 'success');
+        } catch (error) {
+          UIUtils.showMessage('下載失敗，請重試', 'error');
+        }
+      }
+    });
+
+    // 重新生成按鈕
+    document.getElementById('restart-button').addEventListener('click', () => {
+      toolkit.stopPolling();
+      UIUtils.hide('result-section');
+      UIUtils.hide('progress-section');
+      UIUtils.updateProgress(0);
+      document.getElementById('result-image').src = '';
+    });
+  </script>
+</body>
+</html>
+

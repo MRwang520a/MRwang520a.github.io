@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 功能中心 - DEMO</title>
+  <link rel="stylesheet" href="common.css">
+  <style>
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+      margin-top: 60px;
+    }
+
+    .feature-card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: var(--shadow-card);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(178, 178, 228, 0.3);
+    }
+
+    .feature-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    .feature-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1F2937;
+    }
+
+    .feature-description {
+      font-size: 14px;
+      color: #6B7280;
+      line-height: 1.6;
+    }
+
+    .feature-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--gradient-primary);
+      color: #FFFFFF;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="../index.html" class="back-button">
+      ← 返回首頁
+    </a>
+
+    <h1 class="page-title">AI 功能中心</h1>
+    <p class="page-subtitle">選擇您需要的 AI 功能，開始創作</p>
+
+    <div class="features-grid">
+      <!-- AI 萬物摳圖 -->
+      <a href="matting.html" class="feature-card">
+        <div class="feature-icon">✂️</div>
+        <h3 class="feature-title">AI 萬物摳圖</h3>
+        <p class="feature-description">
+          智能識別並分離主體與背景，一鍵生成透明背景圖。
+          適用於人物、商品、動物等各類對象。
+        </p>
+        <span class="feature-badge">立即體驗</span>
+      </a>
+
+      <!-- AI 產品精修 -->
+      <a href="#" class="feature-card" onclick="alert('功能開發中，敬請期待！'); return false;">
+        <div class="feature-icon">✨</div>
+        <h3 class="feature-title">AI 產品精修</h3>
+        <p class="feature-description">
+          自動優化產品照片的光影與細節，提升商品圖片質量。
+          支持亮度、對比度、飽和度調整。
+        </p>
+        <span class="feature-badge">開發中</span>
+      </a>
+
+      <!-- AI 背景合成 -->
+      <a href="#" class="feature-card" onclick="alert('功能開發中，敬請期待！'); return false;">
+        <div class="feature-icon">🎨</div>
+        <h3 class="feature-title">AI 背景合成</h3>
+        <p class="feature-description">
+          根據提示詞智能生成精美背景，並與主體完美融合。
+          適用於電商、廣告、社交媒體等場景。
+        </p>
+        <span class="feature-badge">開發中</span>
+      </a>
+
+      <!-- AI 設計師 -->
+      <a href="designer.html" class="feature-card">
+        <div class="feature-icon">🖼️</div>
+        <h3 class="feature-title">AI 設計師</h3>
+        <p class="feature-description">
+          一句話生成精美圖片，支持多種風格選擇。
+          讓創意瞬間成真，快速完成設計需求。
+        </p>
+        <span class="feature-badge">立即體驗</span>
+      </a>
+
+      <!-- AI 通用變清晰 -->
+      <a href="#" class="feature-card" onclick="alert('功能開發中，敬請期待！'); return false;">
+        <div class="feature-icon">🔍</div>
+        <h3 class="feature-title">AI 通用變清晰</h3>
+        <p class="feature-description">
+          圖像銳化與無損放大，讓模糊圖片變得清晰。
+          支持 1-4x 放大，智能增強細節。
+        </p>
+        <span class="feature-badge">開發中</span>
+      </a>
+
+      <!-- AI 圖片翻譯 -->
+      <a href="#" class="feature-card" onclick="alert('功能開發中，敬請期待！'); return false;">
+        <div class="feature-icon">🌐</div>
+        <h3 class="feature-title">AI 圖片翻譯</h3>
+        <p class="feature-description">
+          識別圖片中的文字並翻譯成目標語言。
+          支持多語言翻譯，適配跨境場景。
+        </p>
+        <span class="feature-badge">開發中</span>
+      </a>
+    </div>
+
+    <div style="text-align: center; margin-top: 80px; padding: 40px; background: #F9FAFB; border-radius: 16px;">
+      <h3 style="font-size: 24px; margin-bottom: 16px; color: #1F2937;">
+        更多功能即將推出
+      </h3>
+      <p style="color: #6B7280; font-size: 16px;">
+        我們正在不斷優化和開發新功能，敬請期待！
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+
